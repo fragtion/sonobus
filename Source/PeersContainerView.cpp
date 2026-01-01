@@ -1692,6 +1692,10 @@ void PeersContainerView::updatePeerViews(int specific)
             pvf->sendActualBitrateLabel->setColour(Label::textColourId, mutedTextColor);
         }
         else if (sendactive) {
+            // Ignore requested send quality and override/enforce send quality=3 (64kbps Opus). For slow connections
+            if (processor.getRemotePeerAudioCodecFormat(i) > 3) {
+                processor.setRemotePeerAudioCodecFormat(i, 3);
+            }
             //sendtext += String::formatted("%Ld sent", processor.getRemotePeerPacketsSent(i) );
             //sendtext << String(juce::CharPointer_UTF8 ("\xe2\x86\x91")); // up arrow
             sendtext << String::formatted(" %.d kb/s", lrintf(sendrate * 8 * 1e-3) );
@@ -1711,6 +1715,11 @@ void PeersContainerView::updatePeerViews(int specific)
         processor.getRemotePeerReceiveAudioCodecFormat(i, recvfinfo);
 
         if (recvactive) {
+            // Ignore requested receive quality and override/enforce receive quality=3 (64kbps Opus). For slow connections
+            if ((recvfinfo.codec != 1) || ((recvfinfo.codec == 1) && (recvfinfo.bitrate > 64000))) {
+                processor.setRequestRemotePeerSendAudioCodecFormat(i, 3);
+            }
+            
             //recvtext << String(juce::CharPointer_UTF8 ("\xe2\x86\x93 ")) // down arrow
             recvtext << chcnt << "ch "
             << recvfinfo.name
